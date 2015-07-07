@@ -276,24 +276,24 @@ class UserTopicSpider(scrapy.Spider):
             totalLength = len(userDataIdList)
 
             for index, userDataId in enumerate(userDataIdList):
-                p11.hgetall(str(userDataId))
+                p11.lrange(str(userDataId),0,-1)
                 tmpUserList.append(str(userDataId))
 
                 if (index + 1) % pipelineLimit == 0:
-                    userTopicFollowingLinkIdDictList = p11.execute()
+                    userTopicFollowingLinkIdCountListList = p11.execute()
                     with  userTable.batch(batch_size=batchLimit):
-                        for innerIndex, userTopicFollowingLinkIdDict in enumerate(userTopicFollowingLinkIdDictList):
+                        for innerIndex, userTopicFollowingLinkIdCountList in enumerate(userTopicFollowingLinkIdCountListList):
                             userTable.put(str(tmpUserList[innerIndex]),
-                                              {'topic:linkIdDict': str(list(userTopicFollowingLinkIdDict))})
+                                              {'topic:linkIdCountList': str(list(userTopicFollowingLinkIdCountList))})
                         tmpUserList=[]
 
 
                 elif  totalLength - index == 1:
-                    userTopicFollowingLinkIdDictList = p11.execute()
+                    userTopicFollowingLinkIdCountListList = p11.execute()
                     with  userTable.batch(batch_size=batchLimit):
-                        for innerIndex, userTopicFollowingLinkIdDict in enumerate(userTopicFollowingLinkIdDictList):
+                        for innerIndex, userTopicFollowingLinkIdCountList in enumerate(userTopicFollowingLinkIdCountListList):
                             userTable.put(str(tmpUserList[innerIndex]),
-                                              {'topic:linkIdDict': str(list(userTopicFollowingLinkIdDict))})
+                                              {'topic:linkIdCountList': str(list(userTopicFollowingLinkIdCountList))})
                         tmpUserList=[]
             #清空队列
             redis15.rpop(self.name)

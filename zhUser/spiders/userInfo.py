@@ -154,18 +154,23 @@ class UserinfoSpider(scrapy.Spider):
                 item['userLocationTopicDataToken'] = selLocation.xpath('@data-token').extract()[0]
                 item['userLocationTopicId'] = selLocation.xpath('@data-topicid').extract()[0]
                 item['userLocationText'] = selLocation.xpath('text()').extract()[0]
-
+            except:
+                try:
+                    item['userLocationTopicLinkId'] = ''
+                    item['userLocationTopicDataToken'] = ''
+                    item['userLocationTopicId'] =''
+                    item['userLocationText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="location"]//span[contains(@class,"location")]/text()').extract()[0]
                 # item['userLocationTopicLink'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"location")]/a/@href').extract()[0]
                 # item['userLocationTopicDataToken'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"location")]/a/@data-token').extract()[0]
                 # item['userLocationTopicId'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"location")]/a/@data-topicid').extract()[0]
                 # item['userLocationText'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"location")]/a/text()').extract()[0]
 
 
-            except:
-                item['userLocationTopicLinkId'] = ''
-                item['userLocationTopicDataToken'] = ''
-                item['userLocationTopicId'] =''
-                item['userLocationText'] = ''
+                except:
+                    item['userLocationTopicLinkId'] = ''
+                    item['userLocationTopicDataToken'] = ''
+                    item['userLocationTopicId'] =''
+                    item['userLocationText'] = ''
 
             try:
                 selBusiness = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="location"]//span[contains(@class,"business")]/a')
@@ -173,16 +178,21 @@ class UserinfoSpider(scrapy.Spider):
                 item['userBusinessTopicDataToken'] = selBusiness.xpath('@data-token').extract()[0]
                 item['userBusinessTopicId'] = selBusiness.xpath('@data-topicid').extract()[0]
                 item['userBusinessText'] = selBusiness.xpath('text()').extract()[0]
-
+            except:
+                try:
+                    item['userBusinessText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="location"]//span[contains(@class,"business")]/text()').extract()[0]
+                    item['userBusinessTopicLinkId'] = ''
+                    item['userBusinessTopicDataToken'] = ''
+                    item['userBusinessTopicId'] = ''
                 # item['userBusinessTopicLink'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"business")]/a/@href').extract()[0]
                 # item['userBusinessTopicDataToken'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"business")]/a/@data-token').extract()[0]
                 # item['userBusinessTopicId'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"business")]/a/@data-topicid').extract()[0]
                 # item['userBusinessText'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="location"]//span[contains(@class,"business")]/a/text()').extract()[0]
-            except:
-                item['userBusinessTopicLinkId'] = ''
-                item['userBusinessTopicDataToken'] = ''
-                item['userBusinessTopicId'] = ''
-                item['userBusinessText'] = ''
+                except:
+                    item['userBusinessTopicLinkId'] = ''
+                    item['userBusinessTopicDataToken'] = ''
+                    item['userBusinessTopicId'] = ''
+                    item['userBusinessText'] = ''
 
             try:
                 item['userGender'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="location"]//span[contains(@class,"gender")]/i/@class').re(r'icon icon-profile-(\w*)')[0]
@@ -199,10 +209,17 @@ class UserinfoSpider(scrapy.Spider):
                 # item['userEmploymentTopicId'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="employment"]//span[contains(@class,"employment")]/a/@data-topicid').extract()[0]
                 # item['userEmploymentText'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="employment"]//span[contains(@class,"employment")]/a/text()').extract()[0]
             except:
-                item['userEmploymentTopicLinkId'] = ''
-                item['userEmploymentTopicDataToken'] = ''
-                item['userEmploymentTopicId'] = ''
-                item['userEmploymentText'] = ''
+                try:
+                    item['userEmploymentText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="employment"]//span[contains(@class,"employment")]/text()').extract()[0]
+                    item['userEmploymentTopicLinkId'] = ''
+                    item['userEmploymentTopicDataToken'] = ''
+                    item['userEmploymentTopicId'] = ''
+
+                except:
+                    item['userEmploymentTopicLinkId'] = ''
+                    item['userEmploymentTopicDataToken'] = ''
+                    item['userEmploymentTopicId'] = ''
+                    item['userEmploymentText'] = ''
 
             try:
                 selPosition = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="employment"]//span[contains(@class,"position")]/a')
@@ -215,10 +232,19 @@ class UserinfoSpider(scrapy.Spider):
                 # item['userPositionTopicId'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="employment"]//span[contains(@class,"position")]/a/@data-topicid').extract()[0]
                 # item['userPositionText'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="employment"]//span[contains(@class,"position")]/a/text()').extract()[0]
             except:
-                item['userPositionTopicLinkId'] = ''
-                item['userPositionTopicDataToken'] = ''
-                item['userPositionTopicId'] =''
-                item['userPositionText'] = ''
+                try:
+                    item['userPositionText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="employment"]//span[contains(@class,"position")]/text()').extract()[0]
+                    item['userPositionTopicLinkId'] = ''
+                    item['userPositionTopicDataToken'] = ''
+                    item['userPositionTopicId'] =''
+
+
+                except:
+                    item['userPositionTopicLinkId'] = ''
+                    item['userPositionTopicDataToken'] = ''
+                    item['userPositionTopicId'] =''
+                    item['userPositionText'] = ''
+
             try:
                 selEducation = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="education"]//span[contains(@class,"education")]/a')
                 item['userEducationTopicLinkId'] = selEducation.xpath('@href').re(r'/topic/(\d+)')[0]
@@ -226,10 +252,16 @@ class UserinfoSpider(scrapy.Spider):
                 item['userEducationTopicId'] = selEducation.xpath('@data-topicid').extract()[0]
                 item['userEducationText'] = selEducation.xpath('text()').extract()[0]
             except:
-                item['userEducationTopicLinkId'] = ''
-                item['userEducationTopicDataToken'] = ''
-                item['userEducationTopicId'] = ''
-                item['userEducationText'] = ''
+                try:
+                    item['userEducationText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="education"]//span[contains(@class,"education")]/text()').extract()[0]
+                    item['userEducationTopicLinkId'] = ''
+                    item['userEducationTopicDataToken'] = ''
+                    item['userEducationTopicId'] = ''
+                except:
+                    item['userEducationTopicLinkId'] = ''
+                    item['userEducationTopicDataToken'] = ''
+                    item['userEducationTopicId'] = ''
+                    item['userEducationText'] = ''
 
 
                 # item['userEducationTopicLink'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="education"]//span[contains(@class,"education")]/a/@href').extract()[0]
@@ -243,10 +275,17 @@ class UserinfoSpider(scrapy.Spider):
                 item['userEducationExtraTopicId'] = selEduExtra.xpath('@data-topicid').extract()[0]
                 item['userEducationExtraText'] = selEduExtra.xpath('text()').extract()[0]
             except:
-                item['userEducationExtraLinkId'] = ''
-                item['userEducationExtraTopicDataToken'] = ''
-                item['userEducationExtraTopicId'] = ''
-                item['userEducationExtraText'] = ''
+                try:
+                    item['userEducationExtraText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="education"]//span[contains(@class,"education-extra")]/text()').extract()[0]
+                    item['userEducationExtraLinkId'] = ''
+                    item['userEducationExtraTopicDataToken'] = ''
+                    item['userEducationExtraTopicId'] = ''
+
+                except:
+                    item['userEducationExtraLinkId'] = ''
+                    item['userEducationExtraTopicDataToken'] = ''
+                    item['userEducationExtraTopicId'] = ''
+                    item['userEducationExtraText'] = ''
 
                 # item['userEducationExtraLink'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="education"]//span[contains(@class,"education-extra")]/a/@href').extract()[0]
                 # item['userEducationExtraTopicDataToken'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="education"]//span[contains(@class,"education-extra")]/a/@data-token').extract()[0]

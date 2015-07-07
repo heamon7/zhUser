@@ -181,12 +181,16 @@ class UserCollectionSpider(scrapy.Spider):
                 item['page'] = response.meta['page']
 
                 for sel in sels:
-                    item['collectionLinkId'] = sel.xpath('/div[@class="zm-profile-fav-item-title-wrap"]/a[@class="zm-profile-fav-item-title"]/@href').re(r'/collection/(\d+)')[0]
-                    item['collectionName'] = sel.xpath('/div[@class="zm-profile-fav-item-title-wrap"]/a[@class="zm-profile-fav-item-title"]/text()').extract()[0]
+                    item['collectionLinkId'] = sel.xpath('div[@class="zm-profile-fav-item-title-wrap"]/a[@class="zm-profile-fav-item-title"]/@href').re(r'/collection/(\d+)')[0]
+                    #有些收藏夹的名字为空，如 http://www.zhihu.com/people/dan-ren-ke/collections?page=1
+                    try:
+                        item['collectionName'] = sel.xpath('div[@class="zm-profile-fav-item-title-wrap"]/a[@class="zm-profile-fav-item-title"]/text()').extract()[0]
+                    except:
+                        item['collectionName'] = ''
                     #关注一个收藏时，发送的fav id 就是fvid
-                    item['collectionFvId'] = sel.xpath('/div[@class="zm-profile-fav-item-title-wrap"]/a[contains(@class,"zg-btn-follow")]/@id').extract()[0]
-                    item['collectionAnswerCount'] = sel.xpath('/div[@class="class="zm-profile-fav-bio""]/text()')[0].re(r'(\d+)')[0]
-                    item['collectionFollowerCount'] = sel.xpath('/div[@class="class="zm-profile-fav-bio""]/text()')[1].re(r'(\d+)')[0]
+                    item['collectionFvId'] = sel.xpath('div[@class="zm-profile-fav-item-title-wrap"]/a[contains(@class,"zg-btn-follow")]/@id').extract()[0]
+                    item['collectionAnswerCount'] = sel.xpath('div[@class="zm-profile-fav-bio"]/text()')[0].re(r'(\d+)')[0]
+                    item['collectionFollowerCount'] = sel.xpath('div[@class="zm-profile-fav-bio"]/text()')[1].re(r'(\d+)')[0]
 
                     yield item
 

@@ -109,6 +109,7 @@ class UserTopicItem(scrapy.Item):
     spiderName = scrapy.Field()
     userLinkId = scrapy.Field()
     userDataId = scrapy.Field()
+    offset = scrapy.Field()
     topicLinkId = scrapy.Field()
     topicImgLink = scrapy.Field()
     topicId = scrapy.Field()
@@ -119,6 +120,7 @@ class UserTopicItem(scrapy.Item):
 
 
 class UserAskItem(scrapy.Item):
+
     spiderName = scrapy.Field()
     userLinkId = scrapy.Field()
     userDataId = scrapy.Field()
@@ -135,6 +137,7 @@ class UserAnswerItem(scrapy.Item):
     page = scrapy.Field()
     questionId = scrapy.Field()
     answerDataId = scrapy.Field()
+    answerDataToken = scrapy.Field()
 
 
 
@@ -160,7 +163,7 @@ class UserActivityItem(scrapy.Item):
     userActivityTime = scrapy.Field()
     userActivityType = scrapy.Field()
     userActivityClass = scrapy.Field()
-    userActivityLinkId = scrapy.Field()
+    userActivityLink = scrapy.Field()
 
 
 

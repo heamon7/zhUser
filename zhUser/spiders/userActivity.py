@@ -294,24 +294,71 @@ class UserActivitySpider(scrapy.Spider):
     def extract(self,item,sel):
         item['userCurrentTimestamp'] = self.userCurrentTimestamp
         item['userActivityTime'] = sel.xpath('@data-time').extract()[0]
-        item['userActivityType']  =  sel.xpath('@data-type').extract()[0]
-        item['userActivityClass'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main"/a[2]/@class').re(r'(\w*)_link')[0]
-        #因为动态的数量是海量的，所以这里要尽一切可能减少存储空间
-        if not item['userActivityType'] :
-            if item['userActivityClass'] == 'topic':
-                item['userActivityLinkId'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main"/a[2]/@href').re(r'/topic/(\d+)')[0]
-                item['userActivityType'] = 't'
-            elif item['userActivityClass'] == 'question':
-                item['userActivityType'] = 'q'
-                item['userActivityLinkId'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main"/a[2]/@href').re(r'/question/(\d+)')[0]
-            elif item['userActivityClass'] == 'column':
-                item['userActivityType'] = 'c'
-                item['userActivityLinkId'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main"/a[2]/@href').re(r'http://zhuanlan.zhihu.com/(\d+)')[0]
-            else:
-                logging.error('Error in userActivityType')
+        try:
+            item['userActivityType']  =  sel.xpath('@data-type').extract()[0]
+        except:
+            #出现了8种情况以外的异常，则过滤掉
+            logging.error('Error in userActivity extract with item: %s and selector.extract: %s',item,sel.extract())
+            item['userActivityType'] = ''
+            item['userDataId']=''
+
+        # try:
+        #     item['userActivityType'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@class').re(r'(\w*)_link')[0]
+        # except:
+        #     item['userActivityType'] = ''
+
+        #如果是发表一篇专栏，那么sel.xpath('div/text()').extract()得到的第二个元素才是目标字符
+        if item['userActivityType'] == 'p':
+            item['userActivityType'] = '8'
+
+
         else:
-            #表明这个activity是赞同，agree的a
-            item['userActivityLinkId'] = ','.join(sel.xpath('div[contains(@class,"zm-profile-section-activity-main"/a[2]/@href').re('/question/(\d+)/answer/(\d+)'))
+            typeText = sel.xpath('div/text()').extract()[0]
+            # u' 赞同了回答'
+            if typeText == u' \u8d5e\u540c\u4e86\u56de\u7b54':
+                item['userActivityType'] = '1'
+            #u' 关注了问题'
+            elif typeText == u' \u5173\u6ce8\u4e86\u95ee\u9898':
+                item['userActivityType'] = '2'
+            #u' 回答了问题'
+            elif typeText == u' \u56de\u7b54\u4e86\u95ee\u9898':
+                item['userActivityType'] = '3'
+            #u' 提了一个问题'
+            elif typeText == u' \u63d0\u4e86\u4e00\u4e2a\u95ee\u9898':
+                item['userActivityType'] = '4'
+            #u' 关注了话题'
+            elif typeText == u' \u5173\u6ce8\u4e86\u8bdd\u9898':
+                item['userActivityType'] = '5'
+            #u' 关注了专栏'
+            elif typeText == u' \u5173\u6ce8\u4e86\u4e13\u680f':
+                item['userActivityType'] = '6'
+            #u' 关注了收藏夹'
+            elif typeText == u' \u5173\u6ce8\u4e86\u6536\u85cf\u5939':
+                item['userActivityType'] = '7'
+            else :
+                logging.error('Error in userActivity typeText with typeText: %s and selector.extract: %s',typeText,sel.extract())
+                item['userDataId']=''
+            item['userActivityLink'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').extract()[0]
+
+        #因为动态的数量是海量的，所以这里要尽一切可能减少存储空间
+        # if not item['userActivityType'] :
+        #     if item['userActivityClass'] == 'topic':
+        #         item['userActivityLinkId'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').re(r'/topic/(\d+)')[0]
+        #         item['userActivityType'] = 't'
+        #     elif item['userActivityClass'] == 'question':
+        #         item['userActivityType'] = 'q'
+        #         item['userActivityLinkId'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').re(r'/question/(\d+)')[0]
+        #     elif item['userActivityClass'] == 'column':
+        #         item['userActivityType'] = 'c'
+        #         item['userActivityLinkId'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').re(r'http://zhuanlan.zhihu.com/(\d+)')[0]
+        #     else:
+        #         #error
+        #         item['userActivityType'] = 'e'
+        #         item['userActivityLinkId'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').extract()[0]
+        #         logging.error('Error in userActivity parsePage with item: %s and selector.extract: %s',item,sel.extract())
+        # else:
+        #     #表明这个activity是赞同，agree的a
+        #     item['userActivityLinkId'] = ','.join(sel.xpath('div[contains(@class,"zm-profile-section-activity-main"/a[2]/@href').re('/question/(\d+)/answer/(\d+)'))
         return item
 
 

@@ -149,29 +149,26 @@ class UserAskSpider(scrapy.Spider):
         logging.warning('start_requests ing ......')
         logging.warning('totalCount to request is :'+str(len(self.userDataIdList)))
 
+        logging.warning('userDataIdList to request is :'+str(self.userLinkIdList[0:5]))
+        logging.warning('userColumnCountList to request is :'+str(self.userAskCountList[0:5]))
 
         for index ,userLinkId in enumerate(self.userLinkIdList):
 
             reqTimes = (int(self.userAskCountList[index])+self.reqLimit-1)/self.reqLimit
+            logging.warning('response.meta[params]: %s \n response.body: %s',response.meta['params'],response.body)
 
             userDataId = self.userDataIdList[index]
             for index in reversed(range(reqTimes)):
                 reqUrl = self.baseUrl %(str(userLinkId),str(index+1))
-                yield Request(url =reqUrl
-                                  ,meta={'userLinkId':userLinkId
+                logging.warning('response.reqUrl: %s',reqUrl)
+                yield Request(url =reqUrl,
+                                  meta={
+                                      'userLinkId':userLinkId
                                     ,'userDataId':userDataId
-                                    ,'page':str(index+1)}
+                                    ,'page':str(index+1)
+                                        }
                                   ,callback=self.parsePage
                                   )
-
-
-
-
-
-
-
-
-
 
     def parsePage(self,response):
 
@@ -187,6 +184,8 @@ class UserAskSpider(scrapy.Spider):
         else:
             item =  UserAskItem()
             item['spiderName'] = self.name
+            logging.warning('response.url: %s \n response.body: %s',response.request.url,response.body)
+
             sels= response.xpath('//div[contains(@class,"zm-profile-section-item")]')
             if sels:
                 item['userLinkId'] = response.meta['userLinkId']

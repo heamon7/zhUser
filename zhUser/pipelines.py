@@ -237,7 +237,9 @@ class UserTopicPipeline(object):
                 topicLinkId = item['topicLinkId']
                 self.redis3.sadd('topicIdSet',topicLinkId)
                 #存放用户在其关注的每个话题下得回答数量
-                self.redis11.hset(str(item['userDataId']),topicLinkId,item['topicAnswerCount'])
+                self.redis11.lpush(str(item['userDataId']),
+                                   topicLinkId,
+                                   item['topicAnswerCount'])
             return item
         else:
             return item
@@ -245,7 +247,7 @@ class UserTopicPipeline(object):
 class UserAskPipeline(object):
 
     def __init__(self):
-        self.redis3 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=3)
+        # self.redis3 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=3)
         self.redis11 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=11)
 #这里简单处理，不考虑关注者的前后顺序，处理为一个集合,每个关注在数据库里存为一条记录，在缓存里存为一个hash表
     def process_item(self, item, spider):
@@ -267,7 +269,10 @@ class UserAnswerPipeline(object):
         #这里只取用户的linkId作为下一步userInfo的源，userDataId只是存到questionFollower里
         if item['spiderName'] == 'userAnswer':
             if item['userDataId']:
-                self.redis11.hset(str(item['userDataId']),item['questionId'],item['answerDataId'])
+                #理论上来讲，是不会在一次抓取过程中有重复的，为了便于取，这里存为列表
+                self.redis11.lpush(str(item['userDataId']),
+                                   item['questionId'],
+                                   item['answerDataToken'])
             return item
         else:
             return item
@@ -285,7 +290,7 @@ class UserCollectionPipeline(object):
         if item['spiderName'] == 'userCollection':
             if item['userDataId']:
                 collectionLinkId = item['collectionLinkId']
-                collectionFvId = re.split('fv\-(\d+)',item['collectionFvId'])
+                collectionFvId = re.split('fv\-(\d+)',item['collectionFvId'])[1]
                 # self.redis3.sadd('columnLinkIdSet',columnLinkId)
                 self.redis11.sadd(str(item['userDataId']),collectionLinkId)
                 currentTimestamp = int(time.time())
@@ -315,13 +320,14 @@ class UserCollectionPipeline(object):
                         self.collectionTable.put(str(collectionLinkId),collectionBasicDict)
                         # self.redis7.lset(str(collectionLinkId),0,str(recordTimestamp))
                     except Exception,e:
-                        logging.warning('Error with put collectionLinkId into redis: '+str(e)+' try again......')
+                        logging.warning('Error with put collectionLinkId into hbase: '+str(e)+' try again......')
                         try:
                             self.collectionTable.put(str(collectionLinkId),collectionBasicDict)
                             # self.redis7.lset(str(collectionLinkId),0,str(recordTimestamp))
                             logging.warning('tried again and successfully put data into redis ......')
                         except Exception,e:
-                            logging.warning('Error with put collectionLinkId into redis: '+str(e)+'tried again and failed')
+                            # logging.error('collectionBasicDict: %s',collectionBasicDict)
+                            logging.error('Error with put collectionLinkId into hbase: '+str(e)+'tried again and failed')
             return item
 
         else:
@@ -345,17 +351,17 @@ class UserActivityPipeline(object):
                 activityDetailDict = {
                     'detail:userActivityTime':item['userActivityTime'],
                     'detail:userActivityType':item['userActivityType'],
-                    'detail:userActivityLinkId':item['userActivityLinkId'],
+                    'detail:userActivityLink':item['userActivityLink'],
                 }
                 try:
-                    self.activityTable.put(item['userDataId'],activityDetailDict,timestamp=item['userActivityTime'])
+                    self.activityTable.put(item['userDataId'],activityDetailDict,timestamp=int(item['userActivityTime']))
                 except Exception,e:
-                    logging.warning('Error with put collectionLinkId into redis: '+str(e)+' try again......')
+                    logging.warning('Error with put activityDetailDict into hbase: '+str(e)+' try again......')
                     try:
-                        self.activityTable.put(item['userDataId'],activityDetailDict,timestamp=item['userActivityTime'])
+                        self.activityTable.put(item['userDataId'],activityDetailDict,timestamp=int(item['userActivityTime']))
                         logging.warning('tried again and successfully put data into redis ......')
                     except Exception,e:
-                        logging.warning('Error with put collectionLinkId into redis: '+str(e)+'tried again and failed')
+                        logging.warning('Error with put activityDetailDict into hbase: '+str(e)+'tried again and failed')
             DropItem()
         else:
             DropItem()

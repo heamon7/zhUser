@@ -249,24 +249,24 @@ class UserAnswerSpider(scrapy.Spider):
             totalLength = len(userDataIdList)
 
             for index, userDataId in enumerate(userDataIdList):
-                p11.hgetall(str(userDataId))
+                p11.lrange(str(userDataId),0,-1)
                 tmpUserList.append(str(userDataId))
 
                 if (index + 1) % pipelineLimit == 0:
-                    userAnswerLinkIdDictList = p11.execute()
+                    userAnswerLinkIdIdListList = p11.execute()
                     with  userTable.batch(batch_size=batchLimit):
-                        for innerIndex, userAnswerLinkIdDict in enumerate(userAnswerLinkIdDictList):
+                        for innerIndex, userAnswerLinkIdIdList in enumerate(userAnswerLinkIdIdListList):
                             userTable.put(str(tmpUserList[innerIndex]),
-                                              {'answer:linkIdDict': str(list(userAnswerLinkIdDict))})
+                                              {'answer:linkIdIdList': str(list(userAnswerLinkIdIdList))})
                         tmpUserList=[]
 
 
                 elif  totalLength - index == 1:
-                    userAnswerLinkIdDictList = p11.execute()
+                    userAnswerLinkIdIdListList = p11.execute()
                     with  userTable.batch(batch_size=batchLimit):
-                        for innerIndex, userAnswerLinkIdDict in enumerate(userAnswerLinkIdDictList):
+                        for innerIndex, userAnswerLinkIdIdList in enumerate(userAnswerLinkIdIdListList):
                             userTable.put(str(tmpUserList[innerIndex]),
-                                              {'answer:linkIdDict': str(list(userAnswerLinkIdDict))})
+                                              {'answer:linkIdIdList': str(list(userAnswerLinkIdIdList))})
                         tmpUserList=[]
             #清空队列
             redis15.rpop(self.name)
