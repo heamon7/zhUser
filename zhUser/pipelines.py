@@ -31,10 +31,20 @@ class UserInfoPipeline(object):
             # else:
             #     recordTimestamp=''
             #为userActivity做准备
+            #如果没有记录过该用户，那么将时间标记为0
             if not recordTimestamp:
-                self.redis8.lpush(str(userDataId)
+                p8 = self.redis8.pipeline()
+                p8.lpush(str(userDataId)
                          ,str(item['userLinkId'])
                          ,str('0'))
+                p8.ltrim(str(userDataId),0,2)
+                p8.execute()
+            #如果记录过该用户，则将userLinkId更新
+            else:
+                p8 = self.redis8.pipeline()
+                p8.rpop(str(userDataId))
+                p8.rpush(str(userDataId),str(item['userLinkId']))
+                p8.execute()
 
             userGender = item['userGender']
             if userGender:
@@ -249,12 +259,21 @@ class UserAskPipeline(object):
     def __init__(self):
         # self.redis3 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=3)
         self.redis11 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=11)
+        connection = happybase.Connection(settings.HBASE_HOST,timeout=10000)
+        self.questionTable = connection.table('question')
 #这里简单处理，不考虑关注者的前后顺序，处理为一个集合,每个关注在数据库里存为一条记录，在缓存里存为一个hash表
     def process_item(self, item, spider):
         #这里只取用户的linkId作为下一步userInfo的源，userDataId只是存到questionFollower里
         if item['spiderName'] == 'userAsk':
             if item['userDataId']:
+                #这里需要在question那个表里添加一个提问者的信息么
+
+
+
+
                 self.redis11.sadd(str(item['userDataId']),item['questionId'])
+                # 这里考虑
+                # self.questionTable.put(str())
             return item
         else:
             return item
@@ -290,7 +309,10 @@ class UserCollectionPipeline(object):
         if item['spiderName'] == 'userCollection':
             if item['userDataId']:
                 collectionLinkId = item['collectionLinkId']
-                collectionFvId = re.split('fv\-(\d+)',item['collectionFvId'])[1]
+                #为了可读性，这里并不使用只有数字的id
+                # collectionFvId = re.split('fv\-(\d+)',item['collectionFvId'])[1]
+                collectionFvId = item['collectionFvId']
+
                 # self.redis3.sadd('columnLinkIdSet',columnLinkId)
                 self.redis11.sadd(str(item['userDataId']),collectionLinkId)
                 currentTimestamp = int(time.time())
@@ -343,7 +365,8 @@ class UserActivityPipeline(object):
         if item['spiderName'] == 'userActivity':
             if item['userDataId']:
                 userDataId = item['userDataId']
-                if item['isLastActivity']:
+                if item['isLastActivity'] :
+                    #更新时间
                     p8 = self.redis8.pipeline()
                     p8.lpop(userDataId)
                     p8.lpush(userDataId,item['userCurrentTimestamp'])

@@ -43,11 +43,20 @@ class UserActivitySpider(scrapy.Spider):
         # userLinkId的来源有comment，voter，follower
         # 我们这里只抓取关注过问题，赞同过答案的user
         self.redis8 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=8)
-        self.spider_type = str(spider_type)
-        self.spider_number = int(spider_number)
-        self.partition = int(partition)
-        self.email= settings.EMAIL_LIST[self.spider_number]
-        self.password=settings.PASSWORD_LIST[self.spider_number]
+
+        try:
+            self.spider_type = str(spider_type)
+            self.spider_number = int(spider_number)
+            self.partition = int(partition)
+            self.email= settings.EMAIL_LIST[self.spider_number]
+            self.password=settings.PASSWORD_LIST[self.spider_number]
+
+        except:
+            self.spider_type = 'Master'
+            self.spider_number = 0
+            self.partition = 1
+            self.email= settings.EMAIL_LIST[self.spider_number]
+            self.password=settings.PASSWORD_LIST[self.spider_number]
 
     def start_requests(self):
 
@@ -228,38 +237,51 @@ class UserActivitySpider(scrapy.Spider):
             item['spiderName'] = self.name
             #如果该用户有产生动态，那么统计，要考虑整除的情况
             if activityCount :
+
+                # logging.warning('activityCount is: %s and response.url is: %s and start is: %s',activityCount,response.url,response.meta['start'])
                 res = Selector(text = data['msg'][1])
                 item['userDataId'] = response.meta['userDataId']
                 # userLastTimestamp = response.meta['userLastTimestamp']
                 # 如果是最后一批动态，注意要考虑整除状态
+
                 if activityCount < self.reqLimit:
+                    # logging.warning('come 1')
+
                     for index,sel in enumerate(res.xpath('//div[contains(@class,"zm-profile-section-item")]')):
+                        # logging.warning('come 3')
                         # 这里相当于永远丢弃了最后一条activity，除非只有一条
                         # 如果该时间点之前的动态不只有一条，且如果迭代到最后一条
                         # 如果是最后一批动态的最后一条
                         if activityCount-index ==1:
+                            # logging.warning('come 5')
                             #只在最后一次更新userLastTimestamp
-                            item['isLastActivity'] = 'true'
+                            item['isLastActivity'] = 1
                             item = self.extract(item,sel)
                             yield item
                         #最后一批动态的非最后一个动态
                         else:
-                            item['isLastActivity'] = 'false'
+                            # logging.warning('come 6')
+                            item['isLastActivity'] = 0
                             item = self.extract(item,sel)
                             yield item
                 #表明不是最后一批动态
                 else:
+                    # logging.warning('come 2')
                     for index,sel in enumerate(res.xpath('//div[contains(@class,"zm-profile-section-item")]')):
+                        # logging.warning('come 4')
                         # 如果是非最后一批动态的最后一条
                         # 那么比较这批动态最后一条的时间和userLastTimestamp
                         if activityCount-index ==1:
+                            # logging.warning('come 7')
                             curLastTimestamp = sel.xpath('@data-time').extract()[0]
                             if int(curLastTimestamp)>=int(response.meta['userLastTimestamp']):
                                 yield FormRequest(url =response.request.url,
                                                   #headers = self.headers,
                                                   meta={'start':str(curLastTimestamp)
                                                       ,'xsrfValue':response.meta['xsrfValue']
-                                                      ,'userDataId':response.meta['userDataId']},
+                                                      ,'userDataId':response.meta['userDataId']
+                                                    ,'userLastTimestamp': response.meta['userLastTimestamp']
+                                                        },
                                                   formdata={
                                                       'start':str(curLastTimestamp)
                                                       ,'_xsrf':response.meta['xsrfValue']
@@ -269,21 +291,23 @@ class UserActivitySpider(scrapy.Spider):
                                                   callback = self.parsePage
                                                   )
                             else:
-                                item['isLastActivity'] = 'true'
+                                # logging.warning('come 8')
+                                item['isLastActivity'] = 1
                                 item = self.extract(item,sel)
                                 yield item
                         #非最后一批动态的非最后一个动态
                         else:
-                            item['isLastActivity'] = 'false'
+                            item['isLastActivity'] = 0
 
                             item = self.extract(item,sel)
+                            # logging.warning('item content is: %s',item)
                             yield item
 
             #表示虽然没有返回动态，但是该用户有过动态，（用户的动态正好是self.reqLimit的整数倍）
             elif self.userCurrentTimestamp != int(response.meta['start']):
                 #没有用户
                 item['userDataId'] = response.meta['userDataId']
-                item['isLastActivity'] = 'true'
+                item['isLastActivity'] = 1
                 item['userCurrentTimestamp'] = self.userCurrentTimestamp
                 yield item
             #表示该用户并没有产生过动态
@@ -294,6 +318,7 @@ class UserActivitySpider(scrapy.Spider):
     def extract(self,item,sel):
         item['userCurrentTimestamp'] = self.userCurrentTimestamp
         item['userActivityTime'] = sel.xpath('@data-time').extract()[0]
+        item['userActivityLink'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').extract()[0]
         try:
             item['userActivityType']  =  sel.xpath('@data-type').extract()[0]
         except:
@@ -302,6 +327,7 @@ class UserActivitySpider(scrapy.Spider):
             item['userActivityType'] = ''
             item['userDataId']=''
 
+
         # try:
         #     item['userActivityType'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@class').re(r'(\w*)_link')[0]
         # except:
@@ -309,36 +335,42 @@ class UserActivitySpider(scrapy.Spider):
 
         #如果是发表一篇专栏，那么sel.xpath('div/text()').extract()得到的第二个元素才是目标字符
         if item['userActivityType'] == 'p':
-            item['userActivityType'] = '8'
+            item['userActivityType'] = '0'
+
+
 
 
         else:
-            typeText = sel.xpath('div/text()').extract()[0]
+            typeText = sel.xpath('div/text()').extract()[1]
+            logging.warning('typeText: %s',typeText)
             # u' 赞同了回答'
-            if typeText == u' \u8d5e\u540c\u4e86\u56de\u7b54':
+            if typeText == u' \u8d5e\u540c\u4e86\u56de\u7b54\n\n':
                 item['userActivityType'] = '1'
             #u' 关注了问题'
-            elif typeText == u' \u5173\u6ce8\u4e86\u95ee\u9898':
+            elif typeText == u' \u5173\u6ce8\u4e86\u95ee\u9898\n\n':
                 item['userActivityType'] = '2'
             #u' 回答了问题'
-            elif typeText == u' \u56de\u7b54\u4e86\u95ee\u9898':
+            elif typeText == u' \u56de\u7b54\u4e86\u95ee\u9898\n\n':
                 item['userActivityType'] = '3'
             #u' 提了一个问题'
-            elif typeText == u' \u63d0\u4e86\u4e00\u4e2a\u95ee\u9898':
+            elif typeText == u' \u63d0\u4e86\u4e00\u4e2a\u95ee\u9898\n\n':
                 item['userActivityType'] = '4'
             #u' 关注了话题'
-            elif typeText == u' \u5173\u6ce8\u4e86\u8bdd\u9898':
+            elif typeText == u' \u5173\u6ce8\u4e86\u8bdd\u9898\n\n':
                 item['userActivityType'] = '5'
             #u' 关注了专栏'
-            elif typeText == u' \u5173\u6ce8\u4e86\u4e13\u680f':
+            elif typeText == u' \u5173\u6ce8\u4e86\u4e13\u680f\n\n':
                 item['userActivityType'] = '6'
             #u' 关注了收藏夹'
-            elif typeText == u' \u5173\u6ce8\u4e86\u6536\u85cf\u5939':
+            elif typeText == u' \u5173\u6ce8\u4e86\u6536\u85cf\u5939\n\n':
                 item['userActivityType'] = '7'
+            #u' 关注了圆桌'
+            elif typeText == u' \u5173\u6ce8\u4e86\u5706\u684c\n\n':
+                item['userActivityType'] = '8'
             else :
-                logging.error('Error in userActivity typeText with typeText: %s and selector.extract: %s',typeText,sel.extract())
+                logging.error('Error in userActivity typeText with  typeText: %s and selector.extract: %s',typeText,sel.extract().encode('utf-8'))
                 item['userDataId']=''
-            item['userActivityLink'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').extract()[0]
+            # item['userActivityLink'] = sel.xpath('div[contains(@class,"zm-profile-section-activity-main")]/a[2]/@href').extract()[0]
 
         #因为动态的数量是海量的，所以这里要尽一切可能减少存储空间
         # if not item['userActivityType'] :

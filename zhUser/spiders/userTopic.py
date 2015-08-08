@@ -43,11 +43,19 @@ class UserTopicSpider(scrapy.Spider):
         # userLinkId的来源有comment，voter，follower
         # 我们这里只抓取关注过问题，赞同过答案的user
         self.redis5 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=5)
-        self.spider_type = str(spider_type)
-        self.spider_number = int(spider_number)
-        self.partition = int(partition)
-        self.email= settings.EMAIL_LIST[self.spider_number]
-        self.password=settings.PASSWORD_LIST[self.spider_number]
+        try:
+            self.spider_type = str(spider_type)
+            self.spider_number = int(spider_number)
+            self.partition = int(partition)
+            self.email= settings.EMAIL_LIST[self.spider_number]
+            self.password=settings.PASSWORD_LIST[self.spider_number]
+
+        except:
+            self.spider_type = 'Master'
+            self.spider_number = 0
+            self.partition = 1
+            self.email= settings.EMAIL_LIST[self.spider_number]
+            self.password=settings.PASSWORD_LIST[self.spider_number]
 
     def start_requests(self):
 
@@ -284,7 +292,7 @@ class UserTopicSpider(scrapy.Spider):
                     with  userTable.batch(batch_size=batchLimit):
                         for innerIndex, userTopicFollowingLinkIdCountList in enumerate(userTopicFollowingLinkIdCountListList):
                             userTable.put(str(tmpUserList[innerIndex]),
-                                              {'topic:linkIdCountList': str(list(userTopicFollowingLinkIdCountList))})
+                                              {'topic:': str(list(userTopicFollowingLinkIdCountList))})
                         tmpUserList=[]
 
 
