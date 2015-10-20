@@ -14,6 +14,7 @@ import logging
 
 from zhUser import settings
 from zhUser.items import UserInfoItem
+from pymongo import MongoClient
 
 
 class UserinfoSpider(scrapy.Spider):
@@ -28,39 +29,51 @@ class UserinfoSpider(scrapy.Spider):
     userDataLinkIdDict = {}
 
 
-    def __init__(self,spider_type='Master',spider_number=0,partition=1,**kwargs):
-        # self.stats = stats
-        #print "Initianizing ....."
-        #所有user的DataId，LinkId对应关系存放在redis3里
-        #但是注意，从comment里爬到的user是没有DataId的
-        # userLinkId的来源有comment，voter，follower
-        # 我们这里只抓取关注过问题，赞同过答案的user
-        self.redis3 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=3)
+    def __init__(self,stats,spider_type='Master',spider_number=0,partition=1,**kwargs):
+        self.stats = stats
+
+        # redis2 以list的形式存储有所有问题的id和问题的info，包括answerCount
+        self.redis_client = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=settings.USER_LINK_ID_REDIS_DB_NUMBER)
+        self.client = MongoClient(settings.MONGO_URL)
+        self.db = self.client['zhihu']
+        self.col_log = self.db['log']
+
+        crawler_log = {'project':settings.BOT_NAME,
+                       'spider':self.name,
+                       'spider_type':spider_type,
+                       'spider_number':spider_number,
+                       'partition':partition,
+                       'type':'start',
+                       'updated_at':datetime.datetime.now()}
+
+        self.col_log.insert_one(crawler_log)
         try:
             self.spider_type = str(spider_type)
             self.spider_number = int(spider_number)
             self.partition = int(partition)
-            self.email= settings.EMAIL_LIST[self.spider_number]
-            self.password=settings.PASSWORD_LIST[self.spider_number]
+            # self.email= settings.EMAIL_LIST[self.spider_number]
+            # self.password=settings.PASSWORD_LIST[self.spider_number]
 
         except:
             self.spider_type = 'Master'
             self.spider_number = 0
             self.partition = 1
-            self.email= settings.EMAIL_LIST[self.spider_number]
-            self.password=settings.PASSWORD_LIST[self.spider_number]
+            # self.email= settings.EMAIL_LIST[self.spider_number]
+            # self.password=settings.PASSWORD_LIST[self.spider_number]
 
+    @classmethod
+    def from_crawler(cls, crawler,spider_type='Master',spider_number=0,partition=1,**kwargs):
+        return cls(crawler.stats,spider_type=spider_type,spider_number=spider_number,partition=partition)
     def start_requests(self):
 
 
         #这里得到的结果应该是一一对应的吧
 
 
-        self.userLinkIdList = self.redis3.smembers('userLinkIdSet')
+        self.userLinkIdList = self.redis_client.smembers('user_link_id')
         totalLength = len(self.userLinkIdList)
 
         if self.spider_type=='Master':
-
             logging.warning('Master spider_type is '+self.spider_type)
             if self.partition!=1:
                 logging.warning('Master non 1 partition is '+str(self.partition))
@@ -92,29 +105,32 @@ class UserinfoSpider(scrapy.Spider):
             logging.warning('spider_type is:'+str(self.spider_type)+'with type of '+str(type(self.spider_type)))
         logging.warning('start_requests ing ......')
         logging.warning('totalCount to request is :'+str(len(self.userLinkIdList)))
+        yield Request(url ='http://www.zhihu.com',
+                      cookies=settings.COOKIES_LIST[self.spider_number],
+                      callback =self.after_login)
 
-        yield Request("http://www.zhihu.com",callback = self.post_login)
-
-
-    def post_login(self,response):
-        xsrfValue = response.xpath('/html/body/input[@name= "_xsrf"]/@value').extract()[0]
-        yield FormRequest.from_response(response,
-                                          formdata={
-                                              '_xsrf':xsrfValue,
-                                              'email':self.email,
-                                              'password':self.password,
-                                              'rememberme': 'y'
-                                          },
-                                          dont_filter = True,
-                                          callback = self.after_login,
-                                          )
+    #     yield Request("http://www.zhihu.com",callback = self.post_login)
+    #
+    #
+    # def post_login(self,response):
+    #     xsrfValue = response.xpath('/html/body/input[@name= "_xsrf"]/@value').extract()[0]
+    #     yield FormRequest.from_response(response,
+    #                                       formdata={
+    #                                           '_xsrf':xsrfValue,
+    #                                           'email':self.email,
+    #                                           'password':self.password,
+    #                                           'rememberme': 'y'
+    #                                       },
+    #                                       dont_filter = True,
+    #                                       callback = self.after_login,
+    #                                       )
 
     def after_login(self,response):
         try:
             loginUserLink = response.xpath('//div[@id="zh-top-inner"]/div[@class="top-nav-profile"]/a/@href').extract()[0]
-            logging.warning('Successfully login with %s  %s  %s',str(loginUserLink),str(self.email),str(self.password))
+            logging.warning('Successfully login with %s  ',str(loginUserLink))
         except:
-            logging.error('Login failed! %s   %s',self.email,self.password)
+            logging.error('Login failed! %s  ',self.email)
         #inspect_response(response,self)
         #self.urls = ['http://www.zhihu.com/question/28626263','http://www.zhihu.com/question/22921426','http://www.zhihu.com/question/20123112']
         for index, userLinkId in enumerate(self.userLinkIdList):
@@ -362,24 +378,38 @@ class UserinfoSpider(scrapy.Spider):
 
 
     def closed(self,reason):
-        redis15 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=15)
+        self.client = MongoClient(settings.MONGO_URL)
+        self.db = self.client['zhihu']
+        self.col_log = self.db['log']
 
+        crawler_log = {'project':settings.BOT_NAME,
+                       'spider':self.name,
+                       'spider_type':self.spider_type,
+                       'spider_number':self.spider_number,
+                       'partition':self.partition,
+                       'type':'close',
+                       'stats':self.stats.get_stats(),
+                       'updated_at':datetime.datetime.now()}
 
-        #这样的顺序是为了防止两个几乎同时结束
-        p15=redis15.pipeline()
-        p15.lpush(str(self.name),self.spider_number)
-        p15.llen(str(self.name))
-        finishedCount= p15.execute()[1]
-
-        if int(self.partition)==int(finishedCount):
-            #删除其他标记
-            redis15.ltrim(str(self.name),0,0)
-
-            #清空队列
-            redis15.rpop(self.name)
-            #清空缓存数据的redis11数据库
-            payload=settings.NEXT_SCHEDULE_PAYLOAD
-            logging.warning('Begin to request next schedule')
-            response = requests.post('http://'+settings.NEXT_SCHEDULE_SCRAPYD_HOST+':'+settings.NEXT_SCHEDULE_SCRAPYD_PORT+'/schedule.json',data=payload)
-            logging.warning('Response: '+' '+str(response))
-        logging.warning('finished close.....')
+        self.col_log.insert_one(crawler_log)
+        # redis15 = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, password=settings.REDIS_PASSWORD,db=15)
+        #
+        #
+        # #这样的顺序是为了防止两个几乎同时结束
+        # p15=redis15.pipeline()
+        # p15.lpush(str(self.name),self.spider_number)
+        # p15.llen(str(self.name))
+        # finishedCount= p15.execute()[1]
+        #
+        # if int(self.partition)==int(finishedCount):
+        #     #删除其他标记
+        #     redis15.ltrim(str(self.name),0,0)
+        #
+        #     #清空队列
+        #     redis15.rpop(self.name)
+        #     #清空缓存数据的redis11数据库
+        #     payload=settings.NEXT_SCHEDULE_PAYLOAD
+        #     logging.warning('Begin to request next schedule')
+        #     response = requests.post('http://'+settings.NEXT_SCHEDULE_SCRAPYD_HOST+':'+settings.NEXT_SCHEDULE_SCRAPYD_PORT+'/schedule.json',data=payload)
+        #     logging.warning('Response: '+' '+str(response))
+        # logging.warning('finished close.....')
