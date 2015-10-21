@@ -6,7 +6,7 @@ from scrapy.selector import HtmlXPathSelector
 from scrapy.http import Request,FormRequest
 from scrapy.shell import inspect_response
 
-from datetime import datetime
+import datetime
 import re
 import redis
 import requests
@@ -70,7 +70,7 @@ class UserinfoSpider(scrapy.Spider):
         #这里得到的结果应该是一一对应的吧
 
 
-        self.userLinkIdList = self.redis_client.smembers('user_link_id')
+        self.userLinkIdList = list(self.redis_client.smembers('user_link_id'))
         totalLength = len(self.userLinkIdList)
 
         if self.spider_type=='Master':

@@ -80,7 +80,9 @@ class UserInfoPipeline(object):
                 # p5.ltrim(str(userDataId),0,16)
                 # p5.execute()
 
-                user_detail_dict={'user_link_id':str(item['userLinkId'].encode('utf-8')),
+                user_detail_dict={
+                    # 'user_link_id':str(item['userLinkId'].encode('utf-8')),
+                    'user_link_id':str(item['userLinkId']),
                                 'user_weibo_id':str(item['userWeiboId']),
 
                                 'user_name': str(item['userName'].encode('utf-8')),
@@ -91,7 +93,7 @@ class UserInfoPipeline(object):
                                 'user_location_topic_link_id': str(item['userLocationTopicLinkId']),
                                'user_location_topic_data_token': item['userLocationTopicDataToken'],
                                'user_location_topic_id': str(item['userLocationTopicId']),
-                               'user_location_name': str(item['userLocationText'].encode('utf-8')),
+                               'user_location_name': str(item['userLocationText']).encode('utf-8'),
 
                                 'user_business_topic_link_id': str(item['userBusinessTopicLinkId']),
                                'user_business_topic_data_token': item['userBusinessTopicDataToken'],
@@ -120,21 +122,21 @@ class UserInfoPipeline(object):
 
                                'user_description_text':str(item['userDescriptionText'].encode('utf-8')),
                                'user_box_id':str(item['userBoxId']),
-                               'user_ask_count':str(item['userAskCount']),
-                               'user_answer_count': str(item['userAnswerCount']),
-                               'user_post_count': str(item['userPostCount']),
-                               'user_collection_count': item['userCollectionCount'],
+                               'user_ask_count':int(item['userAskCount']),
+                               'user_answer_count': int(item['userAnswerCount']),
+                               'user_post_count': int(item['userPostCount']),
+                               'user_collection_count': int(item['userCollectionCount']),
 
-                               'user_log_count': str(item['userLogCount']),
-                               'user_vote_count': str(item['userVoteCount']),
-                               'user_thanks_count': str(item['userThanksCount']),
-                               'user_fav_count': item['userFavCount'],
-                               'user_share_count': str(item['userShareCount']),
-                               'user_followee_count': str(item['userFolloweeCount']),
-                               'user_follower_count': item['userFollowerCount'],
-                               'user_column_following_count': str(item['userColumnFollowingCount']),
-                               'user_topic_following_count': str(item['userTopicFollowingCount']),
-                               'user_browsed_times': str(item['userBrowsedTimes'])
+                               'user_log_count': int(item['userLogCount']),
+                               'user_vote_count': int(item['userVoteCount']),
+                               'user_thanks_count': int(item['userThanksCount']),
+                               'user_fav_count': int(item['userFavCount']),
+                               'user_share_count': int(item['userShareCount']),
+                               'user_followee_count': int(item['userFolloweeCount']),
+                               'user_follower_count': int(item['userFollowerCount']),
+                               'user_column_following_count': int(item['userColumnFollowingCount']),
+                               'user_topic_following_count': int(item['userTopicFollowingCount']),
+                               'user_browsed_times': int(item['userBrowsedTimes'])
                                 }
                 try:
                     self.col_user_info.insert_one(user_detail_dict)
