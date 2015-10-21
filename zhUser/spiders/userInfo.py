@@ -287,7 +287,7 @@ class UserinfoSpider(scrapy.Spider):
 
             except:
                 try:
-                    selEducation = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="education"]//span[@class="education item")]/a')
+                    selEducation = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="education"]//span[@class="education item"]/a')
                     item['userEducationTopicLinkId'] = selEducation.xpath('@href').re(r'/topic/(\d+)')[0]
                     item['userEducationTopicDataToken'] = selEducation.xpath('@data-token').extract()[0]
                     item['userEducationTopicId'] = selEducation.xpath('@data-topicid').extract()[0]
