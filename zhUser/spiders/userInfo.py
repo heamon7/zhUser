@@ -348,20 +348,68 @@ class UserinfoSpider(scrapy.Spider):
                 item['userAskCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[2]/span/text()').extract()[0]
             except:
                 item['userAskCount'] =0
-                logging.error('Error in userAskCount with //div[contains(@class,"profile-navbar")]/a[2]/span/text()).extract()',response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[2]/span/text()').extract())
-            item['userAnswerCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[3]/span/text()').extract()[0]
-            item['userPostCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[4]/span/text()').extract()[0]
-            item['userCollectionCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[5]/span/text()').extract()[0]
-            item['userLogCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[6]/span/text()').extract()[0]
+                logging.error('Error in userAskCount with %s',response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]').extract())
 
-            item['userVoteCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[2]/strong/text()').extract()[0]
-            item['userThanksCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[3]/strong/text()').extract()[0]
-            item['userFavCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[4]/strong/text()').extract()[0]
-            item['userShareCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[5]/strong/text()').extract()[0]
+            try:
+                item['userAnswerCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[3]/span/text()').extract()[0]
+            except:
+                item['userAnswerCount'] = 0
+                logging.error('Error in userAnswerCount with %s',response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]').extract())
 
+            try:
+                item['userPostCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[4]/span/text()').extract()[0]
+            except:
+                item['userPostCount'] =0
+                logging.error('Error in userPostCount with %s',response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]').extract())
 
-            item['userFolloweeCount'] = response.xpath('//div[contains(@class,"zu-main-sidebar")]/div[contains(@class,"zm-profile-side-following")]/a[1]/strong/text()').extract()[0]
-            item['userFollowerCount'] = response.xpath('//div[contains(@class,"zu-main-sidebar")]/div[contains(@class,"zm-profile-side-following")]/a[2]/strong/text()').extract()[0]
+            try:
+                item['userCollectionCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[5]/span/text()').extract()[0]
+            except:
+                item['userCollectionCount'] =0
+                logging.error('Error in userCollectionCount with %s',response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]').extract())
+
+            try:
+                item['userLogCount'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]/a[6]/span/text()').extract()[0]
+            except:
+                item['userLogCount'] =0
+                logging.error('Error in userLogCount with %s',response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"profile-navbar")]').extract())
+
+            try:
+                item['userVoteCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[2]/strong/text()').extract()[0]
+            except:
+                item['userVoteCount'] =0
+                logging.error('Error in userVoteCount with %s',response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]').extract())
+
+            try:
+                item['userThanksCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[3]/strong/text()').extract()[0]
+            except:
+                item['userThanksCount'] =0
+                logging.error('Error in userThanksCount with %s',response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]').extract())
+
+            try:
+                item['userFavCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[4]/strong/text()').extract()[0]
+            except:
+                item['userFavCount'] =0
+                logging.error('Error in userFavCount with %s',response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]').extract())
+
+            try:
+                item['userShareCount'] = response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]/span[5]/strong/text()').extract()[0]
+            except:
+                item['userShareCount'] =0
+                logging.error('Error in userShareCount with %s',response.xpath('//div[contains(@class,"zm-profile-details-reputation")]/div[@class="zm-profile-module-desc"]').extract())
+
+            try:
+                item['userFolloweeCount'] = response.xpath('//div[contains(@class,"zu-main-sidebar")]/div[contains(@class,"zm-profile-side-following")]/a[1]/strong/text()').extract()[0]
+            except:
+                item['userFolloweeCount'] =0
+                logging.error('Error in userFollowerCount with %s',response.xpath('//div[contains(@class,"zu-main-sidebar")]/div[contains(@class,"zm-profile-side-following")]').extract())
+
+            try:
+                item['userFollowerCount'] = response.xpath('//div[contains(@class,"zu-main-sidebar")]/div[contains(@class,"zm-profile-side-following")]/a[2]/strong/text()').extract()[0]
+            except:
+                item['userFollowerCount'] =0
+                logging.error('Error in userFollowerCount with %s',response.xpath('//div[contains(@class,"zu-main-sidebar")]/div[contains(@class,"zm-profile-side-following")]').extract())
+
 
             #这里需要验证
             if response.xpath('//div[contains(@class,"zu-main-sidebar")]//div[contains(@class,"zm-profile-side-columns")]/@class').extract():

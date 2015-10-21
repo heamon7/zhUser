@@ -6,6 +6,7 @@
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import logging
 from scrapy.exceptions import DropItem
+import datetime
 
 from zhUser import settings
 import time
@@ -136,7 +137,8 @@ class UserInfoPipeline(object):
                                'user_follower_count': int(item['userFollowerCount']),
                                'user_column_following_count': int(item['userColumnFollowingCount']),
                                'user_topic_following_count': int(item['userTopicFollowingCount']),
-                               'user_browsed_times': int(item['userBrowsedTimes'])
+                               'user_browsed_times': int(item['userBrowsedTimes']),
+                                'updated_at':datetime.datetime.now()
                                 }
                 try:
                     self.col_user_info.insert_one(user_detail_dict)
