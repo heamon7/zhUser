@@ -158,7 +158,7 @@ class UserinfoSpider(scrapy.Spider):
 
 
             try:
-                item['userWeiboId'] = response.xpath('//div[@class="zm-profile-header"]//a[@class="zm-profile-header-user-weibo"]/@href').re(r'http://weibo.com/u/(\d+)')[0]  #right
+                item['userWeiboId'] = response.xpath('//div[@class="zm-profile-header"]//a[@class="zm-profile-header-user-weibo"]/@href').re(r'http://weibo.com/(.*)')[0]
             except:
                 item['userWeiboId']=''
 
@@ -304,7 +304,7 @@ class UserinfoSpider(scrapy.Spider):
                 # item['userEducationTopicId'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="education"]//span[contains(@class,"education")]/a/@data-topicid').extract()[0]
                 # item['userEducationText'] = response.xpath('//div[@class="zm-profile-header"]//div[contains(@class,"body")]/div[contains(@class,"zm-profile-header-info")]//div[@data-name="education"]//span[contains(@class,"education")]/a/text()').extract()[0]
             try:
-                item['userEducationExtraText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="education"]//span[@class="education item"]/text()').extract()[0]
+                item['userEducationExtraText'] = selProfile.xpath('div[contains(@class,"zm-profile-header-user-describe")]//div[@data-name="education"]//span[@class="education-extra item"]/text()').extract()[0]
                 item['userEducationExtraLinkId'] = ''
                 item['userEducationExtraTopicDataToken'] = ''
                 item['userEducationExtraTopicId'] = ''
