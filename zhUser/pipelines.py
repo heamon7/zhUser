@@ -27,7 +27,6 @@ class UserInfoPipeline(object):
 
     def process_item(self, item, spider):
         if item['spiderName'] == 'userInfo':
-            userDataId = str(item['userDataId'])
             currentTimestamp = int(time.time())
             # recordTimestamp = self.redis5.lindex(str(userDataId),0)
             recordTimestamp = None
@@ -82,6 +81,7 @@ class UserInfoPipeline(object):
 
                 user_detail_dict={
                     # 'user_link_id':str(item['userLinkId'].encode('utf-8')),
+                    'user_data_id':item['userDataId'],
                     'user_link_id':str(item['userLinkId']),
                                 'user_weibo_id':str(item['userWeiboId']),
 
